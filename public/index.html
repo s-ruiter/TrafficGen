@@ -62,6 +62,12 @@
                 </span>
               </template>
             </div>
+            <div class="custom-upload" x-show="tc.key === 'appControl' && tc.enabled">
+              <label>
+                <input type="checkbox" x-model="tc.heavyApps">
+                Boost Facebook, Microsoft Office &amp; Google Workspace
+              </label>
+            </div>
           </div>
         </template>
 
