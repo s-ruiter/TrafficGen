@@ -1,0 +1,20 @@
+[
+  { "name": "Facebook", "url": "https://www.facebook.com", "category": "facebook" },
+  { "name": "Facebook Messenger", "url": "https://www.messenger.com", "category": "facebook" },
+  { "name": "Facebook Business", "url": "https://business.facebook.com", "category": "facebook" },
+  { "name": "Facebook Ads", "url": "https://www.facebook.com/ads/manager", "category": "facebook" },
+  { "name": "Instagram", "url": "https://www.instagram.com", "category": "facebook" },
+  { "name": "WhatsApp Web", "url": "https://web.whatsapp.com", "category": "facebook" },
+  { "name": "Microsoft Office", "url": "https://www.office.com", "category": "microsoft-office" },
+  { "name": "Outlook Web", "url": "https://outlook.office.com", "category": "microsoft-office" },
+  { "name": "SharePoint", "url": "https://www.sharepoint.com", "category": "microsoft-office" },
+  { "name": "Microsoft Teams", "url": "https://teams.microsoft.com", "category": "microsoft-office" },
+  { "name": "OneDrive", "url": "https://onedrive.live.com", "category": "microsoft-office" },
+  { "name": "Microsoft 365 Admin", "url": "https://admin.microsoft.com", "category": "microsoft-office" },
+  { "name": "Google Docs", "url": "https://docs.google.com", "category": "google-workspace" },
+  { "name": "Google Sheets", "url": "https://sheets.google.com", "category": "google-workspace" },
+  { "name": "Google Slides", "url": "https://slides.google.com", "category": "google-workspace" },
+  { "name": "Gmail", "url": "https://mail.google.com", "category": "google-workspace" },
+  { "name": "Google Calendar", "url": "https://calendar.google.com", "category": "google-workspace" },
+  { "name": "Google Meet", "url": "https://meet.google.com", "category": "google-workspace" }
+]
