@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TrafficGen</title>
   <link rel="stylesheet" href="/style.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script defer src="/app.js"></script>
+  <script defer src="/alpine.min.js"></script>
 </head>
 <body x-data="trafficGen()" x-init="init()">
   <header>
@@ -37,7 +37,14 @@
         <!-- Test cases -->
         <template x-for="tc in testCaseList" :key="tc.key">
           <div class="test-case-block">
-            <h3><label><input type="checkbox" x-model="tc.enabled"> <span x-text="tc.label"></span></label></h3>
+            <h3 style="display:flex;justify-content:space-between;align-items:center">
+              <label><input type="checkbox" x-model="tc.enabled"> <span x-text="tc.label"></span></label>
+              <span style="display:flex;align-items:center;gap:.4rem">
+                <span x-show="tc.builtinModified" style="font-size:.7rem;color:#f4a261;font-weight:600">edited</span>
+                <button x-show="tc.key !== 'malware'" class="btn btn-secondary"
+                  style="font-size:.75rem;padding:.2rem .5rem" @click="openEditor(tc.key, tc.label)">Edit</button>
+              </span>
+            </h3>
             <div class="custom-upload" x-show="tc.enabled">
               <label>
                 <input type="checkbox" x-model="tc.useCustom" :disabled="!tc.uploadInfo">
@@ -154,6 +161,42 @@
           No requests yet. Start a test to see results.
         </p>
       </div>
+    </div>
+  </div>
+
+  <!-- Built-in list editor -->
+  <div x-show="editor.testCase" style="padding:0 1.5rem 1.5rem">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+        <h2 x-text="'Edit: ' + editor.label"></h2>
+        <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+          <span style="font-size:.8rem;color:#888" x-text="editor.entries.length + ' URLs'"></span>
+          <span style="font-size:.8rem;color:#f4a261;font-weight:600" x-show="!editor.isDefault">• edited</span>
+          <button class="btn btn-secondary" style="font-size:.85rem" @click="resetBuiltin" x-show="!editor.isDefault">Reset to Default</button>
+          <button class="btn btn-primary" style="font-size:.85rem" @click="saveBuiltin" :disabled="!editor.dirty || editor.saving">
+            <span x-text="editor.saving ? 'Saving…' : 'Save'"></span>
+          </button>
+          <button class="btn btn-secondary" style="font-size:.85rem" @click="closeEditor">Close</button>
+        </div>
+      </div>
+      <div style="max-height:420px;overflow-y:auto;border:1px solid #e8e8e8;border-radius:6px">
+        <table class="log-table">
+          <thead>
+            <tr><th>Name</th><th>URL</th><th>Category</th><th style="width:2rem"></th></tr>
+          </thead>
+          <tbody>
+            <template x-for="(entry, i) in editor.entries" :key="i">
+              <tr>
+                <td><input type="text" x-model="entry.name" @input="editor.dirty=true" style="width:100%;border:1px solid #e0e0e0;padding:.25rem .4rem;border-radius:3px;font-size:.8rem"></td>
+                <td><input type="text" x-model="entry.url" @input="editor.dirty=true" style="width:100%;border:1px solid #e0e0e0;padding:.25rem .4rem;border-radius:3px;font-size:.8rem;min-width:220px"></td>
+                <td><input type="text" x-model="entry.category" @input="editor.dirty=true" style="width:100%;border:1px solid #e0e0e0;padding:.25rem .4rem;border-radius:3px;font-size:.8rem"></td>
+                <td><button @click="removeEditorRow(i)" style="background:none;border:none;color:#bbb;cursor:pointer;font-size:.9rem;padding:.1rem .3rem" title="Remove">✕</button></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+      <button class="btn btn-secondary" style="margin-top:.75rem;font-size:.85rem" @click="addEditorRow">+ Add URL</button>
     </div>
   </div>
 </body>

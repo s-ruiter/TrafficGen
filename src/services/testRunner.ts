@@ -52,8 +52,13 @@ async function loadUrlList(testCase: TestCase, useCustom: boolean): Promise<UrlE
     if (!cache || cache.urls.length === 0) throw new Error('vxvault cache is empty');
     return cache.urls;
   }
-  const data = await readFile(path.resolve(`src/data/${testCase}.json`), 'utf-8');
-  return JSON.parse(data) as UrlEntry[];
+  try {
+    const data = await readFile(path.resolve(`uploads/${testCase}-builtin.json`), 'utf-8');
+    return JSON.parse(data) as UrlEntry[];
+  } catch {
+    const data = await readFile(path.resolve(`src/data/${testCase}.json`), 'utf-8');
+    return JSON.parse(data) as UrlEntry[];
+  }
 }
 
 export async function startRun(options: StartRunOptions): Promise<string> {
@@ -96,9 +101,7 @@ async function executeRun(runId: string, options: StartRunOptions): Promise<void
       ipIndex++;
 
       const result = await makeRequest(entry.url, sourceIp);
-      const isSuccess = result.statusCode !== null
-        && result.statusCode >= 200
-        && result.statusCode < 300;
+      const isSuccess = result.statusCode !== null;
 
       totalRequests++;
       if (isSuccess) totalSuccess++; else totalFailed++;

@@ -2,10 +2,11 @@ function trafficGen() {
   return {
     // State
     testCaseList: [
-      { key: 'appControl', label: 'Application Control', enabled: true, useCustom: false, uploadInfo: null },
-      { key: 'generalWeb', label: 'General Web Traffic', enabled: true, useCustom: false, uploadInfo: null },
-      { key: 'malware',    label: 'Malware (vxvault)',   enabled: false, useCustom: false, uploadInfo: null },
+      { key: 'appControl', label: 'Application Control', enabled: true, useCustom: false, uploadInfo: null, builtinModified: false },
+      { key: 'generalWeb', label: 'General Web Traffic', enabled: true, useCustom: false, uploadInfo: null, builtinModified: false },
+      { key: 'malware',    label: 'Malware (vxvault)',   enabled: false, useCustom: false, uploadInfo: null, builtinModified: false },
     ],
+    editor: { testCase: null, label: '', entries: [], dirty: false, saving: false, isDefault: true },
     interfaces: [],
     selectedIps: [],
     repeatCount: 1,
@@ -40,6 +41,7 @@ function trafficGen() {
       for (const tc of this.testCaseList) {
         const info = data[tc.key];
         tc.uploadInfo = info?.custom;
+        tc.builtinModified = info?.builtinModified ?? false;
       }
     },
 
@@ -64,6 +66,55 @@ function trafficGen() {
       } finally {
         this.vxvault.loading = false;
       }
+    },
+
+    async openEditor(tcKey, tcLabel) {
+      const res = await fetch(`/api/url-lists/${tcKey}/builtin`);
+      const data = await res.json();
+      this.editor = { testCase: tcKey, label: tcLabel, entries: data.entries.map(e => ({ ...e })), dirty: false, saving: false, isDefault: data.isDefault };
+    },
+
+    closeEditor() {
+      this.editor = { testCase: null, label: '', entries: [], dirty: false, saving: false, isDefault: true };
+    },
+
+    addEditorRow() {
+      this.editor.entries.push({ name: '', url: '', category: '' });
+      this.editor.dirty = true;
+    },
+
+    removeEditorRow(i) {
+      this.editor.entries.splice(i, 1);
+      this.editor.dirty = true;
+    },
+
+    async saveBuiltin() {
+      this.editor.saving = true;
+      try {
+        const res = await fetch(`/api/url-lists/${this.editor.testCase}/builtin`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.editor.entries),
+        });
+        const data = await res.json();
+        if (!res.ok) { alert('Save failed: ' + (data.errors?.join('\n') || data.error)); return; }
+        this.editor.dirty = false;
+        this.editor.isDefault = false;
+        await this.loadUrlLists();
+      } finally {
+        this.editor.saving = false;
+      }
+    },
+
+    async resetBuiltin() {
+      if (!confirm('Reset to default list? Your edits will be lost.')) return;
+      await fetch(`/api/url-lists/${this.editor.testCase}/builtin`, { method: 'DELETE' });
+      const res = await fetch(`/api/url-lists/${this.editor.testCase}/builtin`);
+      const data = await res.json();
+      this.editor.entries = data.entries.map(e => ({ ...e }));
+      this.editor.dirty = false;
+      this.editor.isDefault = true;
+      await this.loadUrlLists();
     },
 
     triggerUpload(tcKey) {

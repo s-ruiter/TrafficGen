@@ -50,6 +50,19 @@ function validateJson(entries: UrlEntry[]): string[] {
   });
 }
 
+const EDITABLE_TEST_CASES: TestCase[] = ['appControl', 'generalWeb'];
+const defaultBuiltins: Record<string, UrlEntry[]> = {
+  appControl: appControlData as UrlEntry[],
+  generalWeb: generalWebData as UrlEntry[],
+};
+
+async function getBuiltinOverride(testCase: TestCase): Promise<UrlEntry[] | null> {
+  try {
+    const data = await fs.readFile(path.resolve(`uploads/${testCase}-builtin.json`), 'utf-8');
+    return JSON.parse(data) as UrlEntry[];
+  } catch { return null; }
+}
+
 async function getCustomInfo(testCase: TestCase) {
   try {
     const [meta, data] = await Promise.all([
@@ -64,14 +77,24 @@ async function getCustomInfo(testCase: TestCase) {
 
 router.get('/', async (_req, res) => {
   const cache = await readCache();
-  const [acCustom, gwCustom, mCustom] = await Promise.all([
+  const [acCustom, gwCustom, mCustom, acOverride, gwOverride] = await Promise.all([
     getCustomInfo('appControl'),
     getCustomInfo('generalWeb'),
     getCustomInfo('malware'),
+    getBuiltinOverride('appControl'),
+    getBuiltinOverride('generalWeb'),
   ]);
   res.json({
-    appControl: { builtin: (appControlData as UrlEntry[]).length, custom: acCustom },
-    generalWeb: { builtin: (generalWebData as UrlEntry[]).length, custom: gwCustom },
+    appControl: {
+      builtin: (acOverride ?? (appControlData as UrlEntry[])).length,
+      builtinModified: acOverride !== null,
+      custom: acCustom,
+    },
+    generalWeb: {
+      builtin: (gwOverride ?? (generalWebData as UrlEntry[])).length,
+      builtinModified: gwOverride !== null,
+      custom: gwCustom,
+    },
     malware: {
       vxvaultCache: cache ? { timestamp: cache.timestamp, count: cache.urls.length } : null,
       custom: mCustom,
@@ -111,6 +134,35 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
   } finally {
     await fs.unlink(req.file!.path).catch(() => {});
   }
+});
+
+router.get('/:testCase/builtin', async (req, res) => {
+  const testCase = req.params.testCase as TestCase;
+  if (!EDITABLE_TEST_CASES.includes(testCase))
+    return res.status(400).json({ error: 'Invalid testCase' }) as any;
+  const override = await getBuiltinOverride(testCase);
+  res.json({ entries: override ?? defaultBuiltins[testCase], isDefault: override === null });
+});
+
+router.put('/:testCase/builtin', async (req, res) => {
+  const testCase = req.params.testCase as TestCase;
+  if (!EDITABLE_TEST_CASES.includes(testCase))
+    return res.status(400).json({ error: 'Invalid testCase' }) as any;
+  const entries = req.body;
+  if (!Array.isArray(entries)) return res.status(400).json({ error: 'Body must be an array' }) as any;
+  if (entries.length === 0) return res.status(400).json({ error: 'List cannot be empty' }) as any;
+  const errors = validateJson(entries as UrlEntry[]);
+  if (errors.length) return res.status(400).json({ errors }) as any;
+  await fs.writeFile(path.resolve(`uploads/${testCase}-builtin.json`), JSON.stringify(entries, null, 2));
+  res.json({ count: entries.length });
+});
+
+router.delete('/:testCase/builtin', async (req, res) => {
+  const testCase = req.params.testCase as TestCase;
+  if (!EDITABLE_TEST_CASES.includes(testCase))
+    return res.status(400).json({ error: 'Invalid testCase' }) as any;
+  await fs.unlink(path.resolve(`uploads/${testCase}-builtin.json`)).catch(() => {});
+  res.json({ reset: true });
 });
 
 router.delete('/:testCase', async (req, res) => {

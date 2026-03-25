@@ -21,7 +21,7 @@ async function ensureDirectories(): Promise<void> {
   await fs.mkdir(path.resolve('uploads/tmp'), { recursive: true });
 }
 
-export async function startServer(port = 3000): Promise<import('http').Server> {
+export async function startServer(port = 8007): Promise<import('http').Server> {
   await ensureDirectories();
   return new Promise((resolve) => {
     const server = app.listen(port, '0.0.0.0', () => {
