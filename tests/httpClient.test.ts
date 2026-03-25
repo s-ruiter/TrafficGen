@@ -57,4 +57,11 @@ describe('makeRequest', () => {
     expect(result.statusCode).toBeNull();
     expect(result.error).toBeDefined();
   });
+
+  it('returns null statusCode and error for a malformed URL', async () => {
+    const result = await makeRequest('not a valid url', '127.0.0.1');
+    expect(result.statusCode).toBeNull();
+    expect(result.responseTime).toBe(0);
+    expect(result.error).toBeDefined();
+  });
 });
