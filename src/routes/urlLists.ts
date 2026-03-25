@@ -19,6 +19,8 @@ function parseCsv(text: string): { entries: UrlEntry[]; errors: string[] } {
     const parts = lines[i].split(',');
     if (parts.length < 3) { errors.push(`Row ${i + 1}: missing columns`); continue; }
     const [name, url, category] = parts.map((p) => p.trim());
+    // Skip rows where all fields are empty (whitespace-only rows)
+    if (!name && !url && !category) continue;
     try {
       const u = new URL(url);
       if (u.protocol !== 'http:' && u.protocol !== 'https:') {

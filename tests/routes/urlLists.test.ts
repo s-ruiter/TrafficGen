@@ -87,6 +87,19 @@ describe('URL Lists routes', () => {
     expect(res.status).toBe(400);
   });
 
+  it('POST /api/url-lists/upload accepts valid JSON', async () => {
+    const json = JSON.stringify([
+      { name: 'YouTube', url: 'https://youtube.com', category: 'streaming' },
+      { name: 'GitHub', url: 'https://github.com', category: 'tech' },
+    ]);
+    const res = await request(app)
+      .post('/api/url-lists/upload')
+      .field('testCase', 'generalWeb')
+      .attach('file', Buffer.from(json), 'custom.json');
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(2);
+  });
+
   it('DELETE /api/url-lists/:testCase returns 200', async () => {
     const res = await request(app).delete('/api/url-lists/appControl');
     expect(res.status).toBe(200);
