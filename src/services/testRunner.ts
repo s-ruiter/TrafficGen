@@ -88,6 +88,13 @@ async function executeRun(runId: string, options: StartRunOptions): Promise<void
     for (const u of urls) allUrls.push({ ...u, testCase: tc });
   }
 
+  // Append heavy app URLs when requested (doubles their frequency in the pool)
+  if (options.heavyApps && options.testCases.includes('appControl')) {
+    const heavyData = await readFile(path.resolve('src/data/appControlHeavy.json'), 'utf-8');
+    const heavyUrls: UrlEntry[] = JSON.parse(heavyData);
+    for (const u of heavyUrls) allUrls.push({ ...u, testCase: 'appControl' });
+  }
+
   let totalRequests = 0;
   let totalSuccess = 0;
   let totalFailed = 0;
