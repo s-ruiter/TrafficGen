@@ -25,6 +25,7 @@ export function parseVxvaultText(text: string): UrlEntry[] {
 export async function fetchVxvaultList(): Promise<UrlEntry[]> {
   return new Promise((resolve, reject) => {
     http.get(VXVAULT_URL, (res) => {
+      res.setEncoding('utf-8');
       let data = '';
       res.on('data', (chunk: string) => { data += chunk; });
       res.on('end', () => resolve(parseVxvaultText(data)));
@@ -36,6 +37,7 @@ export async function fetchVxvaultList(): Promise<UrlEntry[]> {
 export async function refreshCache(): Promise<VxvaultCache> {
   const urls = await fetchVxvaultList();
   const cache: VxvaultCache = { timestamp: new Date().toISOString(), urls };
+  await fs.mkdir(path.dirname(CACHE_PATH), { recursive: true });
   await fs.writeFile(CACHE_PATH, JSON.stringify(cache, null, 2));
   return cache;
 }
