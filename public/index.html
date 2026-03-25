@@ -48,9 +48,11 @@
               <input type="file" style="display:none" :id="'upload-' + tc.key"
                 accept=".csv,.json" @change="handleUpload(tc.key, $event)">
               <template x-if="tc.uploadInfo">
-                <span x-text="tc.uploadInfo.filename + ' (' + tc.uploadInfo.count + ' URLs)'"></span>
-                <button class="btn btn-secondary" style="font-size:.78rem;padding:.3rem .5rem;color:#e63946"
-                  @click="deleteUpload(tc.key)">✕</button>
+                <span style="display:contents">
+                  <span x-text="tc.uploadInfo.filename + ' (' + tc.uploadInfo.count + ' URLs)'"></span>
+                  <button class="btn btn-secondary" style="font-size:.78rem;padding:.3rem .5rem;color:#e63946"
+                    @click="deleteUpload(tc.key)">✕</button>
+                </span>
               </template>
             </div>
           </div>
