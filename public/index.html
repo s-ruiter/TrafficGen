@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrafficGen</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="/app.js"></script>
+</head>
+<body x-data="trafficGen()" x-init="init()">
+  <header>
+    <h1>TrafficGen</h1>
+    <span style="font-size:.85rem;opacity:.7">Firewall &amp; SD-WAN Traffic Generator</span>
+  </header>
+
+  <!-- vxvault status bar -->
+  <div style="padding:0 1.5rem">
+    <div class="vxvault-bar">
+      <strong>vxvault Malware List</strong>
+      <span x-text="vxvault.count > 0 ? vxvault.count + ' URLs' : 'Not cached'"></span>
+      <span x-show="vxvault.timestamp" x-text="'Last updated: ' + formatDate(vxvault.timestamp)"></span>
+      <span class="error" x-show="vxvault.error" x-text="vxvault.error"></span>
+      <button class="btn btn-secondary" @click="refreshVxvault" :disabled="vxvault.loading">
+        <span x-show="vxvault.loading" class="spinner"></span>
+        <span x-text="vxvault.loading ? 'Refreshing…' : 'Refresh Now'"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- Left: config panel -->
+    <div>
+      <div class="panel">
+        <h2>Test Configuration</h2>
+
+        <!-- Test cases -->
+        <template x-for="tc in testCaseList" :key="tc.key">
+          <div class="test-case-block">
+            <h3><label><input type="checkbox" x-model="tc.enabled"> <span x-text="tc.label"></span></label></h3>
+            <div class="custom-upload" x-show="tc.enabled">
+              <label>
+                <input type="checkbox" x-model="tc.useCustom" :disabled="!tc.uploadInfo">
+                Use custom list
+              </label>
+              <button class="btn btn-secondary" style="font-size:.78rem;padding:.3rem .7rem"
+                @click="triggerUpload(tc.key)">Upload</button>
+              <input type="file" style="display:none" :id="'upload-' + tc.key"
+                accept=".csv,.json" @change="handleUpload(tc.key, $event)">
+              <template x-if="tc.uploadInfo">
+                <span x-text="tc.uploadInfo.filename + ' (' + tc.uploadInfo.count + ' URLs)'"></span>
+                <button class="btn btn-secondary" style="font-size:.78rem;padding:.3rem .5rem;color:#e63946"
+                  @click="deleteUpload(tc.key)">✕</button>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <!-- Source IPs -->
+        <div style="margin-top:1rem">
+          <strong style="font-size:.9rem">Source IPs</strong>
+          <div class="ip-list" x-show="interfaces.length > 0">
+            <template x-for="iface in interfaces" :key="iface.ip">
+              <label>
+                <input type="checkbox" :value="iface.ip" x-model="selectedIps">
+                <span x-text="iface.name + ' — ' + iface.ip"></span>
+              </label>
+            </template>
+          </div>
+          <p x-show="interfaces.length === 0" style="font-size:.85rem;color:#888;margin-top:.5rem">
+            No network interfaces found.
+          </p>
+        </div>
+
+        <!-- Repeat count -->
+        <div class="repeat-row">
+          <label>Repeat:</label>
+          <input type="number" x-model.number="repeatCount" min="1" step="1">
+          <span style="font-size:.85rem;color:#888">time(s)</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="action-row">
+          <button class="btn btn-primary" @click="startRun"
+            :disabled="!canStart" x-show="!isRunning">Start</button>
+          <button class="btn btn-danger" @click="stopRun" x-show="isRunning">Stop</button>
+        </div>
+
+        <p x-show="statusMessage" style="margin-top:.75rem;font-size:.85rem;color:#555"
+          x-text="statusMessage"></p>
+      </div>
+    </div>
+
+    <!-- Right: dashboard + log -->
+    <div>
+      <!-- Category cards -->
+      <div class="cards-grid">
+        <template x-for="card in categoryCards" :key="card.key">
+          <div class="card">
+            <div class="card-label" x-text="card.testCase"></div>
+            <div class="card-title" x-text="card.category"></div>
+            <div class="card-stats">
+              <span class="stat-success" x-text="'✓ ' + card.success"></span>&nbsp;
+              <span class="stat-failed" x-text="'✗ ' + card.failed"></span>&nbsp;
+              <span class="stat-total" x-text="'/ ' + card.total"></span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill"
+                :style="'width:' + (card.total > 0 ? Math.round(card.success/card.total*100) : 0) + '%'">
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Request log -->
+      <div class="panel">
+        <h2>Request Log
+          <span x-show="requests.length > 0" style="font-weight:400;font-size:.85rem;color:#888"
+            x-text="' — ' + requests.length + ' requests'"></span>
+        </h2>
+        <div class="log-scroll" x-show="requests.length > 0">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>Time</th><th>Test Case</th><th>Category</th>
+                <th>URL</th><th>Source IP</th>
+                <th>Status</th><th>Code</th><th>Time (ms)</th><th>Error</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="(r, i) in requests" :key="i">
+                <tr :class="r.status === 'failed' ? 'failed' : ''">
+                  <td x-text="r.time"></td>
+                  <td x-text="r.testCase"></td>
+                  <td x-text="r.category"></td>
+                  <td x-text="r.url" style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></td>
+                  <td x-text="r.sourceIp"></td>
+                  <td>
+                    <span class="badge" :class="r.status === 'success' ? 'badge-success' : 'badge-failed'"
+                      x-text="r.status"></span>
+                  </td>
+                  <td x-text="r.statusCode ?? '—'"></td>
+                  <td x-text="r.responseTime"></td>
+                  <td x-text="r.error ?? ''"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <p x-show="requests.length === 0" style="font-size:.85rem;color:#888">
+          No requests yet. Start a test to see results.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

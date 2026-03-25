@@ -1,0 +1,105 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f0f2f5;
+  color: #1a1a2e;
+  min-height: 100vh;
+}
+
+header {
+  background: #1a1a2e;
+  color: #fff;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+header h1 { font-size: 1.4rem; font-weight: 600; }
+
+.layout { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; padding: 1.5rem; }
+
+.panel {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+.panel h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #1a1a2e; }
+
+label { display: flex; align-items: center; gap: .5rem; cursor: pointer; font-size: .9rem; }
+input[type=checkbox], input[type=radio] { width: 16px; height: 16px; cursor: pointer; }
+input[type=number] { width: 80px; padding: .3rem .5rem; border: 1px solid #ddd; border-radius: 4px; }
+
+.test-case-block { border: 1px solid #e8e8e8; border-radius: 6px; padding: .75rem; margin-bottom: .75rem; }
+.test-case-block h3 { font-size: .85rem; font-weight: 600; margin-bottom: .5rem; color: #555; }
+.custom-upload { margin-top: .5rem; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.custom-upload span { font-size: .8rem; color: #888; }
+
+.ip-list { max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: .4rem; margin-top: .5rem; }
+
+.repeat-row { display: flex; align-items: center; gap: .75rem; margin-top: 1rem; font-size: .9rem; }
+
+.btn {
+  padding: .55rem 1.25rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: .9rem;
+  font-weight: 500;
+  transition: background .15s;
+}
+.btn-primary { background: #4361ee; color: #fff; }
+.btn-primary:hover:not(:disabled) { background: #3451d4; }
+.btn-danger { background: #e63946; color: #fff; }
+.btn-danger:hover { background: #c1121f; }
+.btn-secondary { background: #e8e8e8; color: #333; }
+.btn-secondary:hover { background: #d5d5d5; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.action-row { display: flex; gap: .75rem; margin-top: 1.25rem; }
+
+.vxvault-bar {
+  background: #fff;
+  border-radius: 8px;
+  padding: .75rem 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: .85rem;
+  flex-wrap: wrap;
+}
+.vxvault-bar strong { font-weight: 600; }
+.vxvault-bar .error { color: #e63946; }
+
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+.card-label { font-size: .75rem; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: .04em; margin-bottom: .4rem; }
+.card-title { font-size: .9rem; font-weight: 600; margin-bottom: .75rem; }
+.card-stats { display: flex; gap: .5rem; font-size: .85rem; margin-bottom: .6rem; }
+.stat-success { color: #2d6a4f; font-weight: 600; }
+.stat-failed { color: #e63946; font-weight: 600; }
+.stat-total { color: #888; }
+.progress-bar { height: 4px; background: #e8e8e8; border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: #4361ee; transition: width .3s; }
+
+.log-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+.log-table th { text-align: left; padding: .5rem .75rem; background: #f7f7f7; border-bottom: 1px solid #e8e8e8; font-weight: 600; color: #555; position: sticky; top: 0; }
+.log-table td { padding: .45rem .75rem; border-bottom: 1px solid #f0f0f0; word-break: break-all; }
+.log-table tr.failed td { background: #fff5f5; color: #c1121f; }
+.log-scroll { max-height: 400px; overflow-y: auto; border: 1px solid #e8e8e8; border-radius: 6px; }
+
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #ccc; border-top-color: #4361ee; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.badge { display: inline-block; padding: .1rem .4rem; border-radius: 3px; font-size: .75rem; font-weight: 600; }
+.badge-success { background: #d8f3dc; color: #2d6a4f; }
+.badge-failed { background: #ffe5e5; color: #c1121f; }
