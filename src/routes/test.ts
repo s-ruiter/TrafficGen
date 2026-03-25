@@ -10,7 +10,7 @@ const router = Router();
 const VALID_TEST_CASES: TestCase[] = ['appControl', 'generalWeb', 'malware'];
 
 router.post('/start', async (req, res) => {
-  const { testCases, sourceIps, repeatCount, customLists = {} } = req.body;
+  const { testCases, sourceIps, repeatCount, customLists = {}, heavyApps = false } = req.body;
 
   // 409 check first — spec requires this to take priority
   if (getCurrentRun()?.status === 'running')
@@ -42,7 +42,7 @@ router.post('/start', async (req, res) => {
     }
   }
 
-  const runId = await startRun({ testCases, sourceIps, repeatCount, customLists });
+  const runId = await startRun({ testCases, sourceIps, repeatCount, customLists, heavyApps });
   res.json({ runId });
 });
 
