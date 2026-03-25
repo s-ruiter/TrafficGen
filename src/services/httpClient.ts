@@ -23,7 +23,18 @@ export async function makeRequest(
       resolve(result);
     };
 
-    const parsedUrl = new URL(url);
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(url);
+    } catch (err) {
+      settle({
+        statusCode: null,
+        responseTime: 0,
+        error: (err as Error).message,
+      });
+      return;
+    }
+
     const isHttps = parsedUrl.protocol === 'https:';
     const transport = isHttps ? https : http;
 
@@ -58,12 +69,12 @@ export async function makeRequest(
     });
 
     req.setTimeout(timeoutMs, () => {
-      req.destroy();
       settle({
         statusCode: null,
         responseTime: Date.now() - start,
         error: 'Request timed out',
       });
+      req.destroy();
     });
 
     req.on('error', (err) => {
