@@ -2,7 +2,7 @@ function trafficGen() {
   return {
     // State
     testCaseList: [
-      { key: 'appControl', label: 'Application Control', enabled: true, useCustom: false, uploadInfo: null, builtinModified: false },
+      { key: 'appControl', label: 'Application Control', enabled: true, useCustom: false, uploadInfo: null, builtinModified: false, heavyApps: false },
       { key: 'generalWeb', label: 'General Web Traffic', enabled: true, useCustom: false, uploadInfo: null, builtinModified: false },
       { key: 'malware',    label: 'Malware (vxvault)',   enabled: false, useCustom: false, uploadInfo: null, builtinModified: false },
     ],
@@ -164,6 +164,7 @@ function trafficGen() {
           sourceIps: this.selectedIps,
           repeatCount: this.repeatCount,
           customLists,
+          heavyApps: this.testCaseList.find(tc => tc.key === 'appControl')?.heavyApps ?? false,
         }),
       });
 
