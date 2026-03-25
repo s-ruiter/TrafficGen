@@ -16,6 +16,7 @@ function trafficGen() {
     requests: [],
     currentRunId: null,
     sseSource: null,
+    _requestSeq: 0,
 
     get canStart() {
       return this.selectedIps.length > 0
@@ -38,7 +39,7 @@ function trafficGen() {
       const data = await res.json();
       for (const tc of this.testCaseList) {
         const info = data[tc.key];
-        tc.uploadInfo = tc.key === 'malware' ? info?.custom : info?.custom;
+        tc.uploadInfo = info?.custom;
       }
     },
 
@@ -96,6 +97,7 @@ function trafficGen() {
       this.statusMessage = '';
       this.categoryCards = [];
       this.requests = [];
+      this._requestSeq = 0;
 
       const testCases = this.testCaseList.filter(tc => tc.enabled).map(tc => tc.key);
       const customLists = {};
@@ -135,6 +137,7 @@ function trafficGen() {
 
         if (e.type === 'request') {
           this.requests.unshift({
+            _id: ++this._requestSeq,
             time: new Date().toLocaleTimeString(),
             testCase: e.testCase,
             category: e.category,

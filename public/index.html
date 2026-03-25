@@ -131,7 +131,7 @@
               </tr>
             </thead>
             <tbody>
-              <template x-for="(r, i) in requests" :key="i">
+              <template x-for="r in requests" :key="r._id">
                 <tr :class="r.status === 'failed' ? 'failed' : ''">
                   <td x-text="r.time"></td>
                   <td x-text="r.testCase"></td>
