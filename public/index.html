@@ -29,6 +29,20 @@
     </div>
   </div>
 
+  <!-- URLhaus status bar -->
+  <div style="padding:0 1.5rem">
+    <div class="vxvault-bar">
+      <strong>URLhaus Malware List</strong>
+      <span x-text="urlhaus.count > 0 ? urlhaus.count + ' URLs' : 'Not cached'"></span>
+      <span x-show="urlhaus.timestamp" x-text="'Last updated: ' + formatDate(urlhaus.timestamp)"></span>
+      <span class="error" x-show="urlhaus.error" x-text="urlhaus.error"></span>
+      <button class="btn btn-secondary" @click="refreshUrlhaus" :disabled="urlhaus.loading">
+        <span x-show="urlhaus.loading" class="spinner"></span>
+        <span x-text="urlhaus.loading ? 'Refreshing…' : 'Refresh Now'"></span>
+      </button>
+    </div>
+  </div>
+
   <div class="layout">
     <!-- Left: config panel -->
     <div>
@@ -95,8 +109,43 @@
               </div>
             </template>
 
+            <!-- Malware block -->
+            <template x-if="tc.key === 'malware'">
+              <div>
+                <h3><span x-text="tc.label"></span></h3>
+                <div style="margin-left:1.2rem">
+                  <!-- URLhaus sub-row -->
+                  <div style="margin-bottom:.3rem">
+                    <label><input type="checkbox" x-model="tc.urlhausEnabled"> URLhaus (abuse.ch)</label>
+                  </div>
+                  <!-- vxvault sub-row -->
+                  <div style="margin-bottom:.3rem">
+                    <label><input type="checkbox" x-model="tc.enabled"> Malware (vxvault)</label>
+                  </div>
+                  <!-- Use custom list row (same level, shown when vxvault enabled) -->
+                  <div class="custom-upload" x-show="tc.enabled">
+                    <label>
+                      <input type="checkbox" x-model="tc.useCustom" :disabled="!tc.uploadInfo">
+                      Use custom list
+                    </label>
+                    <button class="btn btn-secondary" style="font-size:.78rem;padding:.3rem .7rem"
+                      @click="triggerUpload(tc.key)">Upload</button>
+                    <input type="file" style="display:none" :id="'upload-' + tc.key"
+                      accept=".csv,.json" @change="handleUpload(tc.key, $event)">
+                    <template x-if="tc.uploadInfo">
+                      <span style="display:contents">
+                        <span x-text="tc.uploadInfo.filename + ' (' + tc.uploadInfo.count + ' URLs)'"></span>
+                        <button class="btn btn-secondary" style="font-size:.78rem;padding:.3rem .5rem;color:#e63946"
+                          @click="deleteUpload(tc.key)">✕</button>
+                      </span>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </template>
+
             <!-- All other test cases: original layout unchanged -->
-            <template x-if="tc.key !== 'appControl'">
+            <template x-if="tc.key !== 'appControl' && tc.key !== 'malware'">
               <div>
                 <h3 style="display:flex;justify-content:space-between;align-items:center">
                   <label><input type="checkbox" x-model="tc.enabled"> <span x-text="tc.label"></span></label>
