@@ -5,18 +5,19 @@ import type { TestCase } from '../types';
 import { startRun, stopRun, getCurrentRun, addSseClient } from '../services/testRunner';
 import { getLocalInterfaces } from '../services/networkInterfaces';
 import { readCache } from '../services/vxvaultFetcher';
+import { readUrlhausCache } from '../services/urlhausFetcher';
 
 const router = Router();
 const VALID_TEST_CASES: TestCase[] = ['appControl', 'generalWeb', 'malware'];
 
 router.post('/start', async (req, res) => {
-  const { testCases, sourceIps, runtimeMinutes, customLists = {}, includeHeavyAppControl = false } = req.body;
+  const { testCases, sourceIps, runtimeMinutes, customLists = {}, includeHeavyAppControl = false, includeUrlhaus = false } = req.body;
 
   // 409 check first — spec requires this to take priority
   if (getCurrentRun()?.status === 'running')
     return res.status(409).json({ error: 'A run is already active' }) as any;
 
-  if (!Array.isArray(testCases) || (testCases.length === 0 && !includeHeavyAppControl))
+  if (!Array.isArray(testCases) || (testCases.length === 0 && !includeHeavyAppControl && !includeUrlhaus))
     return res.status(400).json({ error: 'testCases must be a non-empty array' }) as any;
   if (testCases.some((tc: unknown) => !VALID_TEST_CASES.includes(tc as TestCase)))
     return res.status(400).json({ error: 'Invalid test case value' }) as any;
@@ -42,7 +43,13 @@ router.post('/start', async (req, res) => {
     }
   }
 
-  const runId = await startRun({ testCases, sourceIps, runtimeMinutes, customLists, includeHeavyAppControl });
+  if (includeUrlhaus) {
+    const cache = await readUrlhausCache();
+    if (!cache || cache.urls.length === 0)
+      return res.status(400).json({ error: 'URLhaus cache is empty. Please refresh.' }) as any;
+  }
+
+  const runId = await startRun({ testCases, sourceIps, runtimeMinutes, customLists, includeHeavyAppControl, includeUrlhaus });
   res.json({ runId });
 });
 

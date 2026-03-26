@@ -5,6 +5,7 @@ import express from 'express';
 vi.mock('../../src/services/testRunner');
 vi.mock('../../src/services/networkInterfaces');
 vi.mock('../../src/services/vxvaultFetcher');
+vi.mock('../../src/services/urlhausFetcher');
 vi.mock('fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fs/promises')>();
   return { ...actual, access: vi.fn().mockResolvedValue(undefined) };
@@ -23,6 +24,12 @@ describe('Test routes', () => {
     vi.mocked(readCache).mockResolvedValue({
       timestamp: '2026-01-01T00:00:00Z',
       urls: [{ name: 'x', url: 'http://x.com', category: 'malware' }],
+    });
+
+    const { readUrlhausCache } = await import('../../src/services/urlhausFetcher');
+    vi.mocked(readUrlhausCache).mockResolvedValue({
+      timestamp: '2026-01-01T00:00:00Z',
+      urls: [{ name: 'http://x.com', url: 'http://x.com', category: 'urlhaus' }],
     });
 
     const { startRun, stopRun, getCurrentRun } = await import('../../src/services/testRunner');
@@ -159,5 +166,29 @@ describe('Test routes', () => {
       includeHeavyAppControl: true,
     });
     expect(res.status).toBe(200);
+  });
+
+  it('POST /api/test/start returns 200 when testCases is empty but includeUrlhaus is true', async () => {
+    const res = await request(app).post('/api/test/start').send({
+      testCases: [],
+      sourceIps: ['192.168.1.10'],
+      runtimeMinutes: 10,
+      includeUrlhaus: true,
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it('POST /api/test/start returns 400 when includeUrlhaus is true but cache is empty', async () => {
+    const { readUrlhausCache } = await import('../../src/services/urlhausFetcher');
+    vi.mocked(readUrlhausCache).mockResolvedValue(null);
+
+    const res = await request(app).post('/api/test/start').send({
+      testCases: [],
+      sourceIps: ['192.168.1.10'],
+      runtimeMinutes: 10,
+      includeUrlhaus: true,
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/urlhaus/i);
   });
 });
