@@ -40,7 +40,7 @@ describe('Test routes', () => {
     const res = await request(app).post('/api/test/start').send({
       testCases: ['appControl'],
       sourceIps: ['192.168.1.10'],
-      repeatCount: 1,
+      runtimeMinutes: 10,
     });
     expect(res.status).toBe(200);
     expect(res.body.runId).toBe('test-run-id');
@@ -50,7 +50,7 @@ describe('Test routes', () => {
     const res = await request(app).post('/api/test/start').send({
       testCases: [],
       sourceIps: ['192.168.1.10'],
-      repeatCount: 1,
+      runtimeMinutes: 10,
     });
     expect(res.status).toBe(400);
   });
@@ -59,7 +59,7 @@ describe('Test routes', () => {
     const res = await request(app).post('/api/test/start').send({
       testCases: ['appControl'],
       sourceIps: [],
-      repeatCount: 1,
+      runtimeMinutes: 10,
     });
     expect(res.status).toBe(400);
   });
@@ -68,18 +68,25 @@ describe('Test routes', () => {
     const res = await request(app).post('/api/test/start').send({
       testCases: ['appControl'],
       sourceIps: ['1.2.3.4'],
-      repeatCount: 1,
+      runtimeMinutes: 10,
     });
     expect(res.status).toBe(400);
   });
 
-  it('POST /api/test/start returns 400 for repeatCount < 1', async () => {
-    const res = await request(app).post('/api/test/start').send({
+  it('POST /api/test/start returns 400 for runtimeMinutes out of range', async () => {
+    const res0 = await request(app).post('/api/test/start').send({
       testCases: ['appControl'],
       sourceIps: ['192.168.1.10'],
-      repeatCount: 0,
+      runtimeMinutes: 0,
     });
-    expect(res.status).toBe(400);
+    expect(res0.status).toBe(400);
+
+    const res241 = await request(app).post('/api/test/start').send({
+      testCases: ['appControl'],
+      sourceIps: ['192.168.1.10'],
+      runtimeMinutes: 241,
+    });
+    expect(res241.status).toBe(400);
   });
 
   it('POST /api/test/start returns 409 when run is already active', async () => {
@@ -94,7 +101,7 @@ describe('Test routes', () => {
     const res = await request(app).post('/api/test/start').send({
       testCases: ['appControl'],
       sourceIps: ['192.168.1.10'],
-      repeatCount: 1,
+      runtimeMinutes: 10,
     });
     expect(res.status).toBe(409);
   });
@@ -120,7 +127,7 @@ describe('Test routes', () => {
     const res = await request(app).post('/api/test/start').send({
       testCases: ['malware'],
       sourceIps: ['192.168.1.10'],
-      repeatCount: 1,
+      runtimeMinutes: 10,
     });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/vxvault/i);
@@ -139,7 +146,7 @@ describe('Test routes', () => {
     const res = await request(app).post('/api/test/start').send({
       testCases: [],
       sourceIps: [],
-      repeatCount: 0,
+      runtimeMinutes: 10,
     });
     expect(res.status).toBe(409);
   });
@@ -148,7 +155,7 @@ describe('Test routes', () => {
     const res = await request(app).post('/api/test/start').send({
       testCases: [],
       sourceIps: ['192.168.1.10'],
-      repeatCount: 1,
+      runtimeMinutes: 10,
       includeHeavyAppControl: true,
     });
     expect(res.status).toBe(200);
