@@ -48,7 +48,7 @@ describe('testRunner', () => {
     const runId = await startRun({
       testCases: ['appControl'],
       sourceIps: ['192.168.1.1'],
-      repeatCount: 1,
+      runtimeMinutes: 1,
       customLists: {},
     });
     expect(typeof runId).toBe('string');
@@ -60,7 +60,7 @@ describe('testRunner', () => {
     await startRun({
       testCases: ['appControl'],
       sourceIps: ['192.168.1.1'],
-      repeatCount: 1,
+      runtimeMinutes: 1,
       customLists: {},
     });
     const state = getCurrentRun();
@@ -78,7 +78,7 @@ describe('testRunner', () => {
     await startRun({
       testCases: ['appControl'],
       sourceIps: ['192.168.1.1'],
-      repeatCount: 1,
+      runtimeMinutes: 1,
       customLists: {},
     });
     const result = stopRun();
@@ -101,7 +101,7 @@ describe('testRunner', () => {
     const runId = await startRun({
       testCases: ['appControl'],
       sourceIps: ['192.168.1.1'],
-      repeatCount: 1,
+      runtimeMinutes: 1,
       customLists: {},
     });
 
@@ -109,15 +109,18 @@ describe('testRunner', () => {
 
     // Advance past 500ms startup delay
     await vi.advanceTimersByTimeAsync(500);
-    // Advance past 1000ms post-request wait
-    await vi.advanceTimersByTimeAsync(1100);
+    // Advance 1 minute + buffer to expire deadline, then one more request cycle
+    await vi.advanceTimersByTimeAsync(62_000);
 
     const requestEvents = events.filter(e => e.type === 'request');
     const summaryEvents = events.filter(e => e.type === 'summary');
+    const progressEvents = events.filter(e => e.type === 'progress');
     const doneEvents = events.filter(e => e.type === 'done');
 
     expect(requestEvents.length).toBeGreaterThan(0);
     expect(summaryEvents.length).toBeGreaterThan(0);
+    expect(progressEvents.length).toBeGreaterThan(0);
+    expect(progressEvents[0]).toMatchObject({ type: 'progress', elapsedSeconds: expect.any(Number), totalSeconds: 60 });
     expect(doneEvents.length).toBe(1);
   });
 });

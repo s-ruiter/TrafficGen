@@ -4,7 +4,7 @@ import path from 'path';
 import type { ServerResponse } from 'http';
 import type {
   RunState, TestCase, UrlEntry, SseEvent,
-  RequestEvent, SummaryEvent, DoneEvent, StartRunOptions,
+  RequestEvent, SummaryEvent, ProgressEvent, DoneEvent, StartRunOptions,
 } from '../types';
 import { makeRequest } from './httpClient';
 import { readCache } from './vxvaultFetcher';
@@ -88,7 +88,7 @@ async function executeRun(runId: string, options: StartRunOptions): Promise<void
     for (const u of urls) allUrls.push({ ...u, testCase: tc });
   }
 
-  // Append heavy app URLs when requested (doubles their frequency in the pool)
+  // Append heavy app URLs when requested
   if (options.includeHeavyAppControl) {
     let heavyPath: string;
     try {
@@ -107,9 +107,13 @@ async function executeRun(runId: string, options: StartRunOptions): Promise<void
   let totalFailed = 0;
   let ipIndex = 0;
 
-  outer: for (let repeat = 0; repeat < options.repeatCount; repeat++) {
+  const totalSeconds = options.runtimeMinutes * 60;
+  const startTime = Date.now();
+  const deadline = startTime + totalSeconds * 1000;
+
+  outer: while (Date.now() < deadline) {
     for (const entry of allUrls) {
-      if (currentRun.stopRequested) break outer;
+      if (currentRun.stopRequested || Date.now() >= deadline) break outer;
 
       const sourceIp = options.sourceIps[ipIndex % options.sourceIps.length];
       ipIndex++;
@@ -149,6 +153,9 @@ async function executeRun(runId: string, options: StartRunOptions): Promise<void
         ...updated,
       };
       emitEvent(sumEvent);
+
+      const elapsedSeconds = Math.min(Math.floor((Date.now() - startTime) / 1000), totalSeconds);
+      emitEvent({ type: 'progress', elapsedSeconds, totalSeconds });
 
       await sleep(1000);
     }
