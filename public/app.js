@@ -4,7 +4,7 @@ function trafficGen() {
     testCaseList: [
       { key: 'appControl', label: 'Application Control', standardEnabled: true, heavyEnabled: false, useCustom: false, uploadInfo: null, builtinModified: false, heavyBuiltinModified: false },
       { key: 'generalWeb', label: 'General Web Traffic', enabled: true, useCustom: false, uploadInfo: null, builtinModified: false },
-      { key: 'malware',    label: 'Malware (vxvault)',   enabled: false, useCustom: false, uploadInfo: null, builtinModified: false },
+      { key: 'malware',    label: 'Malware (vxvault)',   enabled: false, useCustom: false, uploadInfo: null, builtinModified: false, urlhausEnabled: false },
     ],
     editor: { testCase: null, label: '', entries: [], dirty: false, saving: false, isDefault: true },
     interfaces: [],
@@ -13,6 +13,7 @@ function trafficGen() {
     elapsedSeconds: 0,
     totalSeconds: 0,
     vxvault: { timestamp: null, count: 0, loading: false, error: null },
+    urlhaus: { timestamp: null, count: 0, loading: false, error: null },
     isRunning: false,
     statusMessage: '',
     categoryCards: [],
@@ -23,18 +24,20 @@ function trafficGen() {
 
     get canStart() {
       const ac = this.testCaseList.find(tc => tc.key === 'appControl');
+      const mal = this.testCaseList.find(tc => tc.key === 'malware');
       const appControlActive = ac ? (ac.standardEnabled || ac.heavyEnabled) : false;
+      const urlhausActive = mal?.urlhausEnabled ?? false;
       const othersActive = this.testCaseList
         .filter(tc => tc.key !== 'appControl')
         .some(tc => tc.enabled);
-      return (appControlActive || othersActive)
+      return (appControlActive || othersActive || urlhausActive)
         && this.selectedIps.length > 0
         && !this.isRunning
         && this.runtimeMinutes >= 1;
     },
 
     async init() {
-      await Promise.all([this.loadInterfaces(), this.loadUrlLists(), this.loadVxvaultStatus()]);
+      await Promise.all([this.loadInterfaces(), this.loadUrlLists(), this.loadVxvaultStatus(), this.loadUrlhausStatus()]);
     },
 
     async loadInterfaces() {
@@ -79,6 +82,29 @@ function trafficGen() {
         this.vxvault.error = e.message;
       } finally {
         this.vxvault.loading = false;
+      }
+    },
+
+    async loadUrlhausStatus() {
+      const res = await fetch('/api/urlhaus/status');
+      const data = await res.json();
+      this.urlhaus.timestamp = data.timestamp;
+      this.urlhaus.count = data.count;
+    },
+
+    async refreshUrlhaus() {
+      this.urlhaus.loading = true;
+      this.urlhaus.error = null;
+      try {
+        const res = await fetch('/api/urlhaus/refresh', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Refresh failed');
+        this.urlhaus.timestamp = data.timestamp;
+        this.urlhaus.count = data.count;
+      } catch (e) {
+        this.urlhaus.error = e.message;
+      } finally {
+        this.urlhaus.loading = false;
       }
     },
 
@@ -167,6 +193,7 @@ function trafficGen() {
       this.totalSeconds = 0;
 
       const ac = this.testCaseList.find(tc => tc.key === 'appControl');
+      const mal = this.testCaseList.find(tc => tc.key === 'malware');
       const testCases = [
         ...(ac?.standardEnabled ? ['appControl'] : []),
         ...this.testCaseList.filter(tc => tc.key !== 'appControl' && tc.enabled).map(tc => tc.key),
@@ -186,6 +213,7 @@ function trafficGen() {
           runtimeMinutes: this.runtimeMinutes,
           customLists,
           includeHeavyAppControl: ac?.heavyEnabled ?? false,
+          includeUrlhaus: mal?.urlhausEnabled ?? false,
         }),
       });
 
