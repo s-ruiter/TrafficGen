@@ -50,7 +50,13 @@ export interface DoneEvent {
   totalFailed: number;
 }
 
-export type SseEvent = RequestEvent | SummaryEvent | DoneEvent;
+export interface ProgressEvent {
+  type: 'progress';
+  elapsedSeconds: number;
+  totalSeconds: number;
+}
+
+export type SseEvent = RequestEvent | SummaryEvent | ProgressEvent | DoneEvent;
 
 export interface VxvaultCache {
   timestamp: string;
@@ -60,7 +66,7 @@ export interface VxvaultCache {
 export interface StartRunOptions {
   testCases: TestCase[];
   sourceIps: string[];
-  repeatCount: number;
+  runtimeMinutes: number;
   customLists: Partial<Record<TestCase, 'builtin' | 'custom'>>;
   includeHeavyAppControl?: boolean;
 }
