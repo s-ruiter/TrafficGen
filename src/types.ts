@@ -63,10 +63,16 @@ export interface VxvaultCache {
   urls: UrlEntry[];
 }
 
+export interface UrlhausCache {
+  timestamp: string;
+  urls: UrlEntry[];
+}
+
 export interface StartRunOptions {
   testCases: TestCase[];
   sourceIps: string[];
   runtimeMinutes: number;
   customLists: Partial<Record<TestCase, 'builtin' | 'custom'>>;
   includeHeavyAppControl?: boolean;
+  includeUrlhaus?: boolean;
 }
