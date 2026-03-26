@@ -9,7 +9,9 @@ function trafficGen() {
     editor: { testCase: null, label: '', entries: [], dirty: false, saving: false, isDefault: true },
     interfaces: [],
     selectedIps: [],
-    repeatCount: 1,
+    runtimeMinutes: 10,
+    elapsedSeconds: 0,
+    totalSeconds: 0,
     vxvault: { timestamp: null, count: 0, loading: false, error: null },
     isRunning: false,
     statusMessage: '',
@@ -28,7 +30,7 @@ function trafficGen() {
       return (appControlActive || othersActive)
         && this.selectedIps.length > 0
         && !this.isRunning
-        && this.repeatCount >= 1;
+        && this.runtimeMinutes >= 1;
     },
 
     async init() {
@@ -161,6 +163,8 @@ function trafficGen() {
       this.categoryCards = [];
       this.requests = [];
       this._requestSeq = 0;
+      this.elapsedSeconds = 0;
+      this.totalSeconds = 0;
 
       const ac = this.testCaseList.find(tc => tc.key === 'appControl');
       const testCases = [
@@ -179,7 +183,7 @@ function trafficGen() {
         body: JSON.stringify({
           testCases,
           sourceIps: this.selectedIps,
-          repeatCount: this.repeatCount,
+          runtimeMinutes: this.runtimeMinutes,
           customLists,
           includeHeavyAppControl: ac?.heavyEnabled ?? false,
         }),
@@ -207,7 +211,7 @@ function trafficGen() {
         if (e.type === 'request') {
           this.requests.unshift({
             _id: ++this._requestSeq,
-            time: new Date().toLocaleTimeString(),
+            time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
             testCase: e.testCase,
             category: e.category,
             url: e.url,
@@ -236,6 +240,11 @@ function trafficGen() {
           this.statusMessage = `Done — ${e.totalRequests} requests, ${e.totalSuccess} success, ${e.totalFailed} failed`;
           this.sseSource.close();
         }
+
+        if (e.type === 'progress') {
+          this.elapsedSeconds = e.elapsedSeconds;
+          this.totalSeconds = e.totalSeconds;
+        }
       };
 
       this.sseSource.onerror = () => {
@@ -252,6 +261,13 @@ function trafficGen() {
     formatDate(iso) {
       if (!iso) return '';
       return new Date(iso).toLocaleString();
+    },
+
+    formatRemaining() {
+      const remaining = Math.max(0, this.totalSeconds - this.elapsedSeconds);
+      const m = Math.floor(remaining / 60);
+      const s = remaining % 60;
+      return `${m}:${s.toString().padStart(2, '0')} left`;
     },
   };
 }
