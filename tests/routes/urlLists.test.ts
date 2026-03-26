@@ -109,4 +109,42 @@ describe('URL Lists routes', () => {
     const res = await request(app).delete('/api/url-lists/invalid');
     expect(res.status).toBe(400);
   });
+
+  it('GET /api/url-lists returns appControlHeavy in response', async () => {
+    const res = await request(app).get('/api/url-lists');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('appControlHeavy');
+    expect(res.body.appControlHeavy).toHaveProperty('builtinModified');
+    expect(res.body.appControlHeavy.builtinModified).toBe(false);
+  });
+
+  it('GET /api/url-lists/appControlHeavy/builtin returns default entries', async () => {
+    const res = await request(app).get('/api/url-lists/appControlHeavy/builtin');
+    expect(res.status).toBe(200);
+    expect(res.body.isDefault).toBe(true);
+    expect(Array.isArray(res.body.entries)).toBe(true);
+    expect(res.body.entries.length).toBeGreaterThan(0);
+  });
+
+  it('PUT /api/url-lists/appControlHeavy/builtin saves custom entries', async () => {
+    const entries = [{ name: 'Test', url: 'https://example.com', category: 'test' }];
+    const res = await request(app)
+      .put('/api/url-lists/appControlHeavy/builtin')
+      .send(entries);
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(1);
+  });
+
+  it('DELETE /api/url-lists/appControlHeavy/builtin returns 200', async () => {
+    const res = await request(app).delete('/api/url-lists/appControlHeavy/builtin');
+    expect(res.status).toBe(200);
+    expect(res.body.reset).toBe(true);
+  });
+
+  it('GET /api/url-lists shows builtinModified true for appControlHeavy after PUT', async () => {
+    const entries = [{ name: 'Test', url: 'https://example.com', category: 'test' }];
+    await request(app).put('/api/url-lists/appControlHeavy/builtin').send(entries);
+    const listRes = await request(app).get('/api/url-lists');
+    expect(listRes.body.appControlHeavy.builtinModified).toBe(true);
+  });
 });
