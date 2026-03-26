@@ -33,6 +33,13 @@ vi.mock('../src/services/vxvaultFetcher', () => ({
   }),
 }));
 
+vi.mock('../src/services/urlhausFetcher', () => ({
+  readUrlhausCache: vi.fn().mockResolvedValue({
+    timestamp: '2026-01-01T00:00:00Z',
+    urls: [{ name: 'http://urlhaus.example.com', url: 'http://urlhaus.example.com', category: 'urlhaus' }],
+  }),
+}));
+
 // Speed up tests by mocking setTimeout
 vi.useFakeTimers();
 
@@ -122,5 +129,37 @@ describe('testRunner', () => {
     expect(progressEvents.length).toBeGreaterThan(0);
     expect(progressEvents[0]).toMatchObject({ type: 'progress', elapsedSeconds: expect.any(Number), totalSeconds: 60 });
     expect(doneEvents.length).toBe(1);
+  });
+
+  it('appends URLhaus URLs to pool when includeUrlhaus is true', async () => {
+    const { startRun } = await import('../src/services/testRunner');
+    const events: any[] = [];
+
+    const mockRes = {
+      write: (data: string) => {
+        const json = data.replace('data: ', '').trim();
+        if (json) events.push(JSON.parse(json));
+      },
+      end: vi.fn(),
+    };
+
+    const { addSseClient } = await import('../src/services/testRunner');
+    const runId = await startRun({
+      testCases: [],
+      sourceIps: ['192.168.1.1'],
+      runtimeMinutes: 1,
+      customLists: {},
+      includeUrlhaus: true,
+    });
+
+    addSseClient(runId, mockRes as any);
+
+    await vi.advanceTimersByTimeAsync(500);
+    await vi.advanceTimersByTimeAsync(2100);
+
+    const requestEvents = events.filter(e => e.type === 'request');
+    expect(requestEvents.length).toBeGreaterThan(0);
+    expect(requestEvents[0].category).toBe('urlhaus');
+    expect(requestEvents[0].testCase).toBe('malware');
   });
 });

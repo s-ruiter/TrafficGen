@@ -8,6 +8,7 @@ import type {
 } from '../types';
 import { makeRequest } from './httpClient';
 import { readCache } from './vxvaultFetcher';
+import { readUrlhausCache } from './urlhausFetcher';
 
 let currentRun: RunState | null = null;
 const categorySummaries = new Map<string, { total: number; success: number; failed: number }>();
@@ -100,6 +101,14 @@ async function executeRun(runId: string, options: StartRunOptions): Promise<void
     const heavyData = await readFile(heavyPath, 'utf-8');
     const heavyUrls: UrlEntry[] = JSON.parse(heavyData);
     for (const u of heavyUrls) allUrls.push({ ...u, testCase: 'appControl' });
+  }
+
+  // Append URLhaus URLs when requested
+  if (options.includeUrlhaus) {
+    const cache = await readUrlhausCache();
+    if (cache) {
+      for (const u of cache.urls) allUrls.push({ ...u, testCase: 'malware' });
+    }
   }
 
   let totalRequests = 0;
