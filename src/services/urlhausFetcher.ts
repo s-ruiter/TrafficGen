@@ -13,9 +13,9 @@ export async function fetchUrlhausList(): Promise<UrlEntry[]> {
     method: 'POST',
     headers: {
       'Auth-Key': apiKey,
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: JSON.stringify({ limit: 100 }),
+    body: 'limit=100',
   });
 
   if (!response.ok) throw new Error(`URLhaus API error: ${response.status}`);
