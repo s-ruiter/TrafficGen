@@ -62,5 +62,5 @@ export interface StartRunOptions {
   sourceIps: string[];
   repeatCount: number;
   customLists: Partial<Record<TestCase, 'builtin' | 'custom'>>;
-  heavyApps?: boolean;
+  includeHeavyAppControl?: boolean;
 }
