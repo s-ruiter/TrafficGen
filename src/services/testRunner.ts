@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { readFile } from 'fs/promises';
+import { readFile, access } from 'fs/promises';
 import path from 'path';
 import type { ServerResponse } from 'http';
 import type {
@@ -89,8 +89,15 @@ async function executeRun(runId: string, options: StartRunOptions): Promise<void
   }
 
   // Append heavy app URLs when requested (doubles their frequency in the pool)
-  if (options.heavyApps && options.testCases.includes('appControl')) {
-    const heavyData = await readFile(path.resolve('src/data/appControlHeavy.json'), 'utf-8');
+  if (options.includeHeavyAppControl) {
+    let heavyPath: string;
+    try {
+      await access(path.resolve('uploads/appControlHeavy-builtin.json'));
+      heavyPath = path.resolve('uploads/appControlHeavy-builtin.json');
+    } catch {
+      heavyPath = path.resolve('src/data/appControlHeavy.json');
+    }
+    const heavyData = await readFile(heavyPath, 'utf-8');
     const heavyUrls: UrlEntry[] = JSON.parse(heavyData);
     for (const u of heavyUrls) allUrls.push({ ...u, testCase: 'appControl' });
   }
