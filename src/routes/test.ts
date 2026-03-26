@@ -10,13 +10,13 @@ const router = Router();
 const VALID_TEST_CASES: TestCase[] = ['appControl', 'generalWeb', 'malware'];
 
 router.post('/start', async (req, res) => {
-  const { testCases, sourceIps, repeatCount, customLists = {}, heavyApps = false } = req.body;
+  const { testCases, sourceIps, repeatCount, customLists = {}, includeHeavyAppControl = false } = req.body;
 
   // 409 check first — spec requires this to take priority
   if (getCurrentRun()?.status === 'running')
     return res.status(409).json({ error: 'A run is already active' }) as any;
 
-  if (!Array.isArray(testCases) || testCases.length === 0)
+  if (!Array.isArray(testCases) || (testCases.length === 0 && !includeHeavyAppControl))
     return res.status(400).json({ error: 'testCases must be a non-empty array' }) as any;
   if (testCases.some((tc: unknown) => !VALID_TEST_CASES.includes(tc as TestCase)))
     return res.status(400).json({ error: 'Invalid test case value' }) as any;
@@ -42,7 +42,7 @@ router.post('/start', async (req, res) => {
     }
   }
 
-  const runId = await startRun({ testCases, sourceIps, repeatCount, customLists, heavyApps });
+  const runId = await startRun({ testCases, sourceIps, repeatCount, customLists, includeHeavyAppControl });
   res.json({ runId });
 });
 

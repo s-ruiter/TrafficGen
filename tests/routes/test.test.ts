@@ -143,4 +143,14 @@ describe('Test routes', () => {
     });
     expect(res.status).toBe(409);
   });
+
+  it('POST /api/test/start returns 200 when testCases is empty but includeHeavyAppControl is true', async () => {
+    const res = await request(app).post('/api/test/start').send({
+      testCases: [],
+      sourceIps: ['192.168.1.10'],
+      repeatCount: 1,
+      includeHeavyAppControl: true,
+    });
+    expect(res.status).toBe(200);
+  });
 });
