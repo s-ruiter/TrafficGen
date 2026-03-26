@@ -144,11 +144,10 @@
           </p>
         </div>
 
-        <!-- Repeat count -->
+        <!-- Runtime -->
         <div class="repeat-row">
-          <label>Repeat:</label>
-          <input type="number" x-model.number="repeatCount" min="1" step="1">
-          <span style="font-size:.85rem;color:#888">time(s)</span>
+          <label>Runtime (minutes):</label>
+          <input type="number" x-model.number="runtimeMinutes" min="1" max="240" step="1" style="width:5rem">
         </div>
 
         <!-- Actions -->
@@ -156,6 +155,17 @@
           <button class="btn btn-primary" @click="startRun"
             :disabled="!canStart" x-show="!isRunning">Start</button>
           <button class="btn btn-danger" @click="stopRun" x-show="isRunning">Stop</button>
+        </div>
+
+        <!-- Progress bar -->
+        <div x-show="isRunning" style="margin-top:.75rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;font-size:.85rem;color:#555">
+            <span x-text="formatRemaining()"></span>
+            <span x-text="totalSeconds > 0 ? Math.round(elapsedSeconds / totalSeconds * 100) + '%' : '0%'"></span>
+          </div>
+          <div style="background:#e8e8e8;border-radius:6px;height:10px;overflow:hidden">
+            <div :style="'width:' + (totalSeconds > 0 ? Math.min(elapsedSeconds / totalSeconds * 100, 100) : 0) + '%;background:#2a9d8f;height:100%;border-radius:6px;transition:width .4s linear'"></div>
+          </div>
         </div>
 
         <p x-show="statusMessage" style="margin-top:.75rem;font-size:.85rem;color:#555"
@@ -195,9 +205,15 @@
           <table class="log-table">
             <thead>
               <tr>
-                <th>Time</th><th>Test Case</th><th>Category</th>
-                <th>URL</th><th>Source IP</th>
-                <th>Status</th><th>Code</th><th>Time (ms)</th><th>Error</th>
+                <th style="min-width:70px">Time</th>
+                <th style="min-width:110px">Test Case</th>
+                <th style="min-width:130px">Category</th>
+                <th style="min-width:360px">URL</th>
+                <th style="min-width:120px">Source IP</th>
+                <th style="min-width:80px">Status</th>
+                <th style="min-width:60px">Code</th>
+                <th style="min-width:80px">Time (ms)</th>
+                <th>Error</th>
               </tr>
             </thead>
             <tbody>
@@ -206,7 +222,7 @@
                   <td x-text="r.time"></td>
                   <td x-text="r.testCase"></td>
                   <td x-text="r.category"></td>
-                  <td x-text="r.url" style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></td>
+                  <td x-text="r.url" style="max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></td>
                   <td x-text="r.sourceIp"></td>
                   <td>
                     <span class="badge" :class="r.status === 'success' ? 'badge-success' : 'badge-failed'"
