@@ -4,6 +4,7 @@ import fs from 'fs/promises';
 import interfacesRouter from './routes/interfaces';
 import urlListsRouter from './routes/urlLists';
 import vxvaultRouter from './routes/vxvault';
+import urlhausRouter from './routes/urlhaus';
 import testRouter from './routes/test';
 
 const app = express();
@@ -13,6 +14,7 @@ app.use(express.static(path.resolve('public')));
 app.use('/api/interfaces', interfacesRouter);
 app.use('/api/url-lists', urlListsRouter);
 app.use('/api/vxvault', vxvaultRouter);
+app.use('/api/urlhaus', urlhausRouter);
 app.use('/api/test', testRouter);
 
 async function ensureDirectories(): Promise<void> {
