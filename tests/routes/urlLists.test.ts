@@ -40,6 +40,9 @@ describe('URL Lists routes', () => {
   });
 
   afterEach(async () => {
+    // Clean up appControlHeavy override file if it exists in the actual uploads directory
+    // (in case path mock didn't capture it)
+    await fs.unlink(path.resolve('uploads/appControlHeavy-builtin.json')).catch(() => {});
     await fs.rm(tmpDir, { recursive: true, force: true });
     vi.restoreAllMocks();
   });
