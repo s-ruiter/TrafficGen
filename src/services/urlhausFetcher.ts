@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import type { UrlEntry, UrlhausCache } from '../types';
 
-const URLHAUS_URL = 'https://urlhaus-api.abuse.ch/v1/urls/recent/';
+const URLHAUS_URL = 'https://urlhaus-api.abuse.ch/v1/urls/recent/limit/100/';
 const CACHE_PATH = path.resolve('cache/urlhaus-cache.json');
 
 export async function fetchUrlhausList(): Promise<UrlEntry[]> {
@@ -10,12 +10,10 @@ export async function fetchUrlhausList(): Promise<UrlEntry[]> {
   if (!apiKey) throw new Error('URLHAUS_API_KEY is not configured');
 
   const response = await fetch(URLHAUS_URL, {
-    method: 'POST',
+    method: 'GET',
     headers: {
       'Auth-Key': apiKey,
-      'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: 'limit=100',
   });
 
   if (!response.ok) throw new Error(`URLhaus API error: ${response.status}`);
