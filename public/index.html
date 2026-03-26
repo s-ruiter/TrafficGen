@@ -37,37 +37,94 @@
         <!-- Test cases -->
         <template x-for="tc in testCaseList" :key="tc.key">
           <div class="test-case-block">
-            <h3 style="display:flex;justify-content:space-between;align-items:center">
-              <label><input type="checkbox" x-model="tc.enabled"> <span x-text="tc.label"></span></label>
-              <span style="display:flex;align-items:center;gap:.4rem">
-                <span x-show="tc.builtinModified" style="font-size:.7rem;color:#f4a261;font-weight:600">edited</span>
-                <button x-show="tc.key !== 'malware'" class="btn btn-secondary"
-                  style="font-size:.75rem;padding:.2rem .5rem" @click="openEditor(tc.key, tc.label)">Edit</button>
-              </span>
-            </h3>
-            <div class="custom-upload" x-show="tc.enabled">
-              <label>
-                <input type="checkbox" x-model="tc.useCustom" :disabled="!tc.uploadInfo">
-                Use custom list
-              </label>
-              <button class="btn btn-secondary" style="font-size:.78rem;padding:.3rem .7rem"
-                @click="triggerUpload(tc.key)">Upload</button>
-              <input type="file" style="display:none" :id="'upload-' + tc.key"
-                accept=".csv,.json" @change="handleUpload(tc.key, $event)">
-              <template x-if="tc.uploadInfo">
-                <span style="display:contents">
-                  <span x-text="tc.uploadInfo.filename + ' (' + tc.uploadInfo.count + ' URLs)'"></span>
-                  <button class="btn btn-secondary" style="font-size:.78rem;padding:.3rem .5rem;color:#e63946"
-                    @click="deleteUpload(tc.key)">✕</button>
-                </span>
-              </template>
-            </div>
-            <div class="custom-upload" x-show="tc.key === 'appControl' && tc.enabled">
-              <label>
-                <input type="checkbox" x-model="tc.heavyApps">
-                Boost Facebook, Microsoft Office &amp; Google Workspace
-              </label>
-            </div>
+
+            <!-- Application Control: tri-state header + two sub-rows -->
+            <template x-if="tc.key === 'appControl'">
+              <div>
+                <h3 style="display:flex;justify-content:space-between;align-items:center"
+                    x-effect="$el.querySelector('input[type=checkbox]').indeterminate = (tc.standardEnabled !== tc.heavyEnabled)">
+                  <label>
+                    <input type="checkbox"
+                      :checked="tc.standardEnabled && tc.heavyEnabled"
+                      @click="tc.standardEnabled && tc.heavyEnabled ? (tc.standardEnabled = false, tc.heavyEnabled = false) : (tc.standardEnabled = true, tc.heavyEnabled = true)">
+                    <span x-text="tc.label"></span>
+                  </label>
+                </h3>
+
+                <!-- Standard sub-row -->
+                <div style="margin-left:1.2rem">
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <label><input type="checkbox" x-model="tc.standardEnabled"> Standard list</label>
+                    <span style="display:flex;align-items:center;gap:.4rem">
+                      <span x-show="tc.builtinModified" style="font-size:.7rem;color:#f4a261;font-weight:600">edited</span>
+                      <button class="btn btn-secondary" style="font-size:.75rem;padding:.2rem .5rem"
+                        @click="openEditor('appControl', 'Application Control')">Edit</button>
+                    </span>
+                  </div>
+                  <div class="custom-upload" x-show="tc.standardEnabled">
+                    <label>
+                      <input type="checkbox" x-model="tc.useCustom" :disabled="!tc.uploadInfo">
+                      Use custom list
+                    </label>
+                    <button class="btn btn-secondary" style="font-size:.78rem;padding:.3rem .7rem"
+                      @click="triggerUpload(tc.key)">Upload</button>
+                    <input type="file" style="display:none" :id="'upload-' + tc.key"
+                      accept=".csv,.json" @change="handleUpload(tc.key, $event)">
+                    <template x-if="tc.uploadInfo">
+                      <span style="display:contents">
+                        <span x-text="tc.uploadInfo.filename + ' (' + tc.uploadInfo.count + ' URLs)'"></span>
+                        <button class="btn btn-secondary" style="font-size:.78rem;padding:.3rem .5rem;color:#e63946"
+                          @click="deleteUpload(tc.key)">✕</button>
+                      </span>
+                    </template>
+                  </div>
+                </div>
+
+                <!-- Boost sub-row -->
+                <div style="margin-left:1.2rem;margin-top:.4rem">
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <label><input type="checkbox" x-model="tc.heavyEnabled"> Boost (Facebook, Microsoft Office &amp; Google Workspace)</label>
+                    <span style="display:flex;align-items:center;gap:.4rem">
+                      <span x-show="tc.heavyBuiltinModified" style="font-size:.7rem;color:#f4a261;font-weight:600">edited</span>
+                      <button class="btn btn-secondary" style="font-size:.75rem;padding:.2rem .5rem"
+                        @click="openEditor('appControlHeavy', 'Boost List')">Edit</button>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- All other test cases: original layout unchanged -->
+            <template x-if="tc.key !== 'appControl'">
+              <div>
+                <h3 style="display:flex;justify-content:space-between;align-items:center">
+                  <label><input type="checkbox" x-model="tc.enabled"> <span x-text="tc.label"></span></label>
+                  <span style="display:flex;align-items:center;gap:.4rem">
+                    <span x-show="tc.builtinModified" style="font-size:.7rem;color:#f4a261;font-weight:600">edited</span>
+                    <button x-show="tc.key !== 'malware'" class="btn btn-secondary"
+                      style="font-size:.75rem;padding:.2rem .5rem" @click="openEditor(tc.key, tc.label)">Edit</button>
+                  </span>
+                </h3>
+                <div class="custom-upload" x-show="tc.enabled">
+                  <label>
+                    <input type="checkbox" x-model="tc.useCustom" :disabled="!tc.uploadInfo">
+                    Use custom list
+                  </label>
+                  <button class="btn btn-secondary" style="font-size:.78rem;padding:.3rem .7rem"
+                    @click="triggerUpload(tc.key)">Upload</button>
+                  <input type="file" style="display:none" :id="'upload-' + tc.key"
+                    accept=".csv,.json" @change="handleUpload(tc.key, $event)">
+                  <template x-if="tc.uploadInfo">
+                    <span style="display:contents">
+                      <span x-text="tc.uploadInfo.filename + ' (' + tc.uploadInfo.count + ' URLs)'"></span>
+                      <button class="btn btn-secondary" style="font-size:.78rem;padding:.3rem .5rem;color:#e63946"
+                        @click="deleteUpload(tc.key)">✕</button>
+                    </span>
+                  </template>
+                </div>
+              </div>
+            </template>
+
           </div>
         </template>
 
