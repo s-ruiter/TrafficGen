@@ -2,7 +2,7 @@ function trafficGen() {
   return {
     // State
     testCaseList: [
-      { key: 'appControl', label: 'Application Control', enabled: true, useCustom: false, uploadInfo: null, builtinModified: false, heavyApps: false },
+      { key: 'appControl', label: 'Application Control', standardEnabled: true, heavyEnabled: false, useCustom: false, uploadInfo: null, builtinModified: false, heavyBuiltinModified: false },
       { key: 'generalWeb', label: 'General Web Traffic', enabled: true, useCustom: false, uploadInfo: null, builtinModified: false },
       { key: 'malware',    label: 'Malware (vxvault)',   enabled: false, useCustom: false, uploadInfo: null, builtinModified: false },
     ],
@@ -20,8 +20,13 @@ function trafficGen() {
     _requestSeq: 0,
 
     get canStart() {
-      return this.selectedIps.length > 0
-        && this.testCaseList.some(tc => tc.enabled)
+      const ac = this.testCaseList.find(tc => tc.key === 'appControl');
+      const appControlActive = ac ? (ac.standardEnabled || ac.heavyEnabled) : false;
+      const othersActive = this.testCaseList
+        .filter(tc => tc.key !== 'appControl')
+        .some(tc => tc.enabled);
+      return (appControlActive || othersActive)
+        && this.selectedIps.length > 0
         && !this.isRunning
         && this.repeatCount >= 1;
     },
@@ -39,9 +44,16 @@ function trafficGen() {
       const res = await fetch('/api/url-lists');
       const data = await res.json();
       for (const tc of this.testCaseList) {
-        const info = data[tc.key];
-        tc.uploadInfo = info?.custom;
-        tc.builtinModified = info?.builtinModified ?? false;
+        if (tc.key === 'appControl') {
+          const info = data['appControl'];
+          tc.uploadInfo = info?.custom;
+          tc.builtinModified = info?.builtinModified ?? false;
+          tc.heavyBuiltinModified = data['appControlHeavy']?.builtinModified ?? false;
+        } else {
+          const info = data[tc.key];
+          tc.uploadInfo = info?.custom;
+          tc.builtinModified = info?.builtinModified ?? false;
+        }
       }
     },
 
@@ -150,10 +162,15 @@ function trafficGen() {
       this.requests = [];
       this._requestSeq = 0;
 
-      const testCases = this.testCaseList.filter(tc => tc.enabled).map(tc => tc.key);
+      const ac = this.testCaseList.find(tc => tc.key === 'appControl');
+      const testCases = [
+        ...(ac?.standardEnabled ? ['appControl'] : []),
+        ...this.testCaseList.filter(tc => tc.key !== 'appControl' && tc.enabled).map(tc => tc.key),
+      ];
       const customLists = {};
-      for (const tc of this.testCaseList) {
-        if (tc.enabled) customLists[tc.key] = tc.useCustom ? 'custom' : 'builtin';
+      if (ac?.standardEnabled) customLists['appControl'] = ac.useCustom ? 'custom' : 'builtin';
+      for (const tc of this.testCaseList.filter(t => t.key !== 'appControl' && t.enabled)) {
+        customLists[tc.key] = tc.useCustom ? 'custom' : 'builtin';
       }
 
       const res = await fetch('/api/test/start', {
@@ -164,7 +181,7 @@ function trafficGen() {
           sourceIps: this.selectedIps,
           repeatCount: this.repeatCount,
           customLists,
-          heavyApps: this.testCaseList.find(tc => tc.key === 'appControl')?.heavyApps ?? false,
+          includeHeavyAppControl: ac?.heavyEnabled ?? false,
         }),
       });
 
