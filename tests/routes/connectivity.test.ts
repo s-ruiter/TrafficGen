@@ -50,4 +50,17 @@ describe('GET /api/connectivity', () => {
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(false);
   });
+
+  it('returns 503 with ok:false when checkConnectivity throws', async () => {
+    const { checkConnectivity } = await import('../../src/services/connectivityChecker');
+    vi.mocked(checkConnectivity).mockRejectedValue(new Error('unexpected'));
+
+    const { default: router } = await import('../../src/routes/connectivity');
+    const app = express();
+    app.use('/api/connectivity', router);
+
+    const res = await request(app).get('/api/connectivity');
+    expect(res.status).toBe(503);
+    expect(res.body.ok).toBe(false);
+  });
 });
