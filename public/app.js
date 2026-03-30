@@ -276,13 +276,15 @@ function trafficGen() {
       };
 
       this.sseSource.onerror = () => {
-        // Run continues server-side; just close the stream client-side
         this.sseSource.close();
+        this.isRunning = false;
+        this.statusMessage = 'Connection lost — the run may still be active server-side.';
       };
     },
 
     async stopRun() {
       await fetch('/api/test/stop', { method: 'POST' });
+      this.isRunning = false;
       this.statusMessage = 'Stopping…';
     },
 
