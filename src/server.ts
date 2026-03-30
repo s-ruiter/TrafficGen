@@ -6,6 +6,7 @@ import urlListsRouter from './routes/urlLists';
 import vxvaultRouter from './routes/vxvault';
 import urlhausRouter from './routes/urlhaus';
 import testRouter from './routes/test';
+import connectivityRouter from './routes/connectivity';
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use('/api/url-lists', urlListsRouter);
 app.use('/api/vxvault', vxvaultRouter);
 app.use('/api/urlhaus', urlhausRouter);
 app.use('/api/test', testRouter);
+app.use('/api/connectivity', connectivityRouter);
 
 async function ensureDirectories(): Promise<void> {
   await fs.mkdir(path.resolve('cache'), { recursive: true });
