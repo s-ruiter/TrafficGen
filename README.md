@@ -66,9 +66,9 @@ cd TrafficGen
 docker compose up -d
 ```
 
-Open `http://localhost:3000` in a browser.
+Open `http://localhost:8007` in a browser.
 
-To use a different host port, edit `docker-compose.yml` before starting:
+To use a different host port, edit the `ports` mapping in `docker-compose.yml` before starting:
 
 ```yaml
 ports:
