@@ -21,6 +21,8 @@ function trafficGen() {
     currentRunId: null,
     sseSource: null,
     _requestSeq: 0,
+    connectivity: { ok: null, checking: false },
+    _connectivityInterval: null,
 
     get canStart() {
       const ac = this.testCaseList.find(tc => tc.key === 'appControl');
@@ -33,11 +35,31 @@ function trafficGen() {
       return (appControlActive || othersActive || urlhausActive)
         && this.selectedIps.length > 0
         && !this.isRunning
-        && this.runtimeMinutes >= 1;
+        && this.runtimeMinutes >= 1
+      && this.connectivity.ok === true;
+    },
+
+    async checkConnectivity() {
+      this.connectivity.checking = true;
+      try {
+        const res = await fetch('/api/connectivity');
+        const data = await res.json();
+        this.connectivity.ok = data.ok;
+        if (!data.ok && this.isRunning) {
+          this.statusMessage = 'Warning: internet connectivity lost. Test continues.';
+        }
+      } catch {
+        this.connectivity.ok = false;
+        if (this.isRunning) {
+          this.statusMessage = 'Warning: internet connectivity lost. Test continues.';
+        }
+      } finally {
+        this.connectivity.checking = false;
+      }
     },
 
     async init() {
-      await Promise.all([this.loadInterfaces(), this.loadUrlLists(), this.loadVxvaultStatus(), this.loadUrlhausStatus()]);
+      await Promise.all([this.loadInterfaces(), this.loadUrlLists(), this.loadVxvaultStatus(), this.loadUrlhausStatus(), this.checkConnectivity()]);
     },
 
     async loadInterfaces() {
@@ -192,6 +214,12 @@ function trafficGen() {
       this.elapsedSeconds = 0;
       this.totalSeconds = 0;
 
+      await this.checkConnectivity();
+      if (!this.connectivity.ok) {
+        this.statusMessage = 'No internet connectivity — cannot start test.';
+        return;
+      }
+
       const ac = this.testCaseList.find(tc => tc.key === 'appControl');
       const mal = this.testCaseList.find(tc => tc.key === 'malware');
       const testCases = [
@@ -227,6 +255,7 @@ function trafficGen() {
       this.isRunning = true;
       this.statusMessage = 'Running…';
       this.connectSse(data.runId);
+      this._connectivityInterval = setInterval(() => this.checkConnectivity(), 60000);
     },
 
     connectSse(runId) {
@@ -265,6 +294,7 @@ function trafficGen() {
 
         if (e.type === 'done') {
           this.isRunning = false;
+          clearInterval(this._connectivityInterval);
           this.statusMessage = `Done — ${e.totalRequests} requests, ${e.totalSuccess} success, ${e.totalFailed} failed`;
           this.sseSource.close();
         }
@@ -278,6 +308,7 @@ function trafficGen() {
       this.sseSource.onerror = () => {
         this.sseSource.close();
         this.isRunning = false;
+        clearInterval(this._connectivityInterval);
         this.statusMessage = 'Connection lost — the run may still be active server-side.';
       };
     },
@@ -285,6 +316,7 @@ function trafficGen() {
     async stopRun() {
       await fetch('/api/test/stop', { method: 'POST' });
       this.isRunning = false;
+      clearInterval(this._connectivityInterval);
       this.statusMessage = 'Stopping…';
     },
 
