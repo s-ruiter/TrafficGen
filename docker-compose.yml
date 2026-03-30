@@ -2,5 +2,5 @@ services:
   trafficgen:
     build: .
     ports:
-      - "8007:3000"
+      - "8007:8007"
     restart: unless-stopped

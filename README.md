@@ -72,7 +72,7 @@ To use a different host port, edit the `ports` mapping in `docker-compose.yml` b
 
 ```yaml
 ports:
-  - "8080:3000"
+  - "8080:8007"
 ```
 
 ### Update
