@@ -52,32 +52,36 @@ npm run build   # production only
 
 Then restart the server.
 
-## Docker
+## Docker Compose
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) with the Compose plugin (included in Docker Desktop)
 
 ### Deploy
 
-Build the image and start a container:
-
 ```bash
-docker build -t trafficgen .
-docker run -d --name trafficgen -p 3000:3000 trafficgen
+git clone https://github.com/s-ruiter/TrafficGen.git
+cd TrafficGen
+docker compose up -d
 ```
 
-Open `http://localhost:3000` in a browser. To use a different host port (e.g. 8080):
+Open `http://localhost:3000` in a browser.
 
-```bash
-docker run -d --name trafficgen -p 8080:3000 trafficgen
+To use a different host port, edit `docker-compose.yml` before starting:
+
+```yaml
+ports:
+  - "8080:3000"
 ```
 
 ### Update
 
-Pull the latest code, rebuild the image, and replace the running container:
+Pull the latest code and rebuild the image:
 
 ```bash
 git pull
-docker build -t trafficgen .
-docker stop trafficgen && docker rm trafficgen
-docker run -d --name trafficgen -p 3000:3000 trafficgen
+docker compose up -d --build
 ```
 
 ## Custom Lists
