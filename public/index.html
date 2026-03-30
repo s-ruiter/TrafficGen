@@ -200,6 +200,12 @@
           <input type="number" x-model.number="runtimeMinutes" min="1" max="240" step="1" style="width:5rem">
         </div>
 
+        <!-- Connectivity indicator -->
+        <div x-show="connectivity.ok !== null" style="font-size:.8rem;margin-bottom:.4rem">
+          <span :style="connectivity.ok ? 'color:#2a9d8f' : 'color:#e63946'"
+                x-text="connectivity.ok ? '● Internet: OK' : '● Internet: unreachable'"></span>
+        </div>
+
         <!-- Actions -->
         <div class="action-row">
           <button class="btn btn-primary" @click="startRun"
