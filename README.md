@@ -52,6 +52,34 @@ npm run build   # production only
 
 Then restart the server.
 
+## Docker
+
+### Deploy
+
+Build the image and start a container:
+
+```bash
+docker build -t trafficgen .
+docker run -d --name trafficgen -p 3000:3000 trafficgen
+```
+
+Open `http://localhost:3000` in a browser. To use a different host port (e.g. 8080):
+
+```bash
+docker run -d --name trafficgen -p 8080:3000 trafficgen
+```
+
+### Update
+
+Pull the latest code, rebuild the image, and replace the running container:
+
+```bash
+git pull
+docker build -t trafficgen .
+docker stop trafficgen && docker rm trafficgen
+docker run -d --name trafficgen -p 3000:3000 trafficgen
+```
+
 ## Custom Lists
 
 Each test case that uses a built-in URL list (Application Control Standard, General Web, and Malware/vxvault) supports replacing the built-in list with your own.
