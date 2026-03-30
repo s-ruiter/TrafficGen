@@ -43,6 +43,13 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function shuffle<T>(arr: T[]): void {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
 async function loadUrlList(testCase: TestCase, useCustom: boolean): Promise<UrlEntry[]> {
   if (useCustom) {
     const data = await readFile(path.resolve(`uploads/${testCase}.json`), 'utf-8');
@@ -121,6 +128,7 @@ async function executeRun(runId: string, options: StartRunOptions): Promise<void
   const deadline = startTime + totalSeconds * 1000;
 
   outer: while (Date.now() < deadline) {
+    shuffle(allUrls);
     for (const entry of allUrls) {
       if (currentRun.stopRequested || Date.now() >= deadline) break outer;
 
