@@ -36,7 +36,7 @@ function trafficGen() {
         && this.selectedIps.length > 0
         && !this.isRunning
         && this.runtimeMinutes >= 1
-      && this.connectivity.ok === true;
+        && this.connectivity.ok === true;
     },
 
     async checkConnectivity() {
@@ -295,6 +295,7 @@ function trafficGen() {
         if (e.type === 'done') {
           this.isRunning = false;
           clearInterval(this._connectivityInterval);
+          this._connectivityInterval = null;
           this.statusMessage = `Done — ${e.totalRequests} requests, ${e.totalSuccess} success, ${e.totalFailed} failed`;
           this.sseSource.close();
         }
@@ -309,6 +310,7 @@ function trafficGen() {
         this.sseSource.close();
         this.isRunning = false;
         clearInterval(this._connectivityInterval);
+        this._connectivityInterval = null;
         this.statusMessage = 'Connection lost — the run may still be active server-side.';
       };
     },
@@ -317,6 +319,7 @@ function trafficGen() {
       await fetch('/api/test/stop', { method: 'POST' });
       this.isRunning = false;
       clearInterval(this._connectivityInterval);
+      this._connectivityInterval = null;
       this.statusMessage = 'Stopping…';
     },
 
